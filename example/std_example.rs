@@ -117,11 +117,11 @@ fn main() {
         1 => (),
         0 => loop {},
         v => panic(v),
-    };
+    }
 
-    /*if u8::shl(1, 9) != 2_u8 {
+    if u8::shl(1, 9) != 2_u8 {
         unsafe { std::intrinsics::abort(); }
-    }*/
+    }
 
     /*const STR: &'static str = "hello";
     fn other_casts() -> *const str {
