@@ -149,6 +149,7 @@ rm src/test/ui/mir/mir_codegen_calls.rs # uses non-scalar type as extern "C" fun
 rm src/test/ui/issues/issue-38763.rs # same
 rm src/test/ui/foreign/foreign-truncated-arguments.rs # same
 rm src/test/ui/align-with-extern-c-fn.rs # same
+rm src/test/ui/consts/const_in_pattern/issue-73431.rs # gives warning for RUSTC_LOG=warn
 
 RUSTC_ARGS="-Zpanic-abort-tests -Zcodegen-backend="$(pwd)"/../target/"$CHANNEL"/librustc_codegen_cranelift."$dylib_ext" --sysroot "$(pwd)"/../build_sysroot/sysroot -Cpanic=abort"
 
