@@ -94,12 +94,12 @@ EOF
 cargo install ripgrep
 
 git checkout $(rustc -V | cut -d' ' -f3 | tr -d '(') src/test
-rm -r src/test/ui/{asm-*,abi*,derives/,extern/,panic-runtime/,panics/,unsized-locals/,proc-macro/,thinlto/,simd*,borrowck/,test*,*lto*.rs,linkage*,unwind-*.rs,*macro*.rs,duplicate/,symbol-names/} || true
+rm -r src/test/ui/{abi*,derives/,extern/,panic-runtime/,panics/,unsized-locals/,proc-macro/,thinlto/,simd*,borrowck/,test*,*lto*.rs,linkage*,unwind-*.rs,*macro*.rs,duplicate/,symbol-names/} || true
 for test in $(rg --files-with-matches "asm!|catch_unwind|should_panic|lto" src/test/ui); do
   rm $test
 done
 
-for test in $(rg --files-with-matches "//~.*ERROR|// error-pattern:" src/test/ui); do
+for test in $(rg --files-with-matches "//~.*ERROR|//~.*NOTE|// error-pattern:|// build-fail" src/test/ui); do
   rm $test
 done
 
@@ -133,7 +133,6 @@ rm src/test/ui/init-large-type.rs # same
 rm src/test/ui/sse2.rs # cpuid not supported, so sse2 not detected
 rm src/test/ui/issues/issue-33992.rs # unsupported linkages
 rm src/test/ui/issues/issue-51947.rs # same
-rm src/test/ui/consts/offset_from_ub.rs # different sysroot source path
 rm src/test/ui/impl-trait/impl-generic-mismatch.rs # same
 rm src/test/ui/issues/issue-21160.rs # same
 rm src/test/ui/issues/issue-28676.rs # depends on C abi passing structs at fixed stack offset
@@ -145,6 +144,11 @@ rm src/test/ui/async-await/async-fn-size-moved-locals.rs # -Cpanic=abort shrinks
 rm src/test/ui/async-await/async-fn-size-uninit-locals.rs # same
 rm src/test/ui/generator/size-moved-locals.rs # same
 rm src/test/ui/fn/dyn-fn-alignment.rs # wants a 256 byte alignment
+rm src/test/ui/rust-2018/proc-macro-crate-in-paths.rs # depends on proc-macro
+rm src/test/ui/mir/mir_codegen_calls.rs # uses non-scalar type as extern "C" function parameter => warning
+rm src/test/ui/issues/issue-38763.rs # same
+rm src/test/ui/foreign/foreign-truncated-arguments.rs # same
+rm src/test/ui/align-with-extern-c-fn.rs # same
 
 RUSTC_ARGS="-Zpanic-abort-tests -Zcodegen-backend="$(pwd)"/../target/"$CHANNEL"/librustc_codegen_cranelift."$dylib_ext" --sysroot "$(pwd)"/../build_sysroot/sysroot -Cpanic=abort"
 
