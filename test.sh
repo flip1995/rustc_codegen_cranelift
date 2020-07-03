@@ -161,7 +161,23 @@ rm src/test/ui/fn/dyn-fn-alignment.rs # wants a 256 byte alignment
 rm src/test/ui/consts/const_in_pattern/issue-73431.rs # gives warning for RUSTC_LOG=warn
 rm src/test/ui/test-attrs/test-fn-signature-verification-for-explicit-return-type.rs # "Cannot run dynamic test fn out-of-process"
 
+rm src/test/incremental/hashes/inline_asm.rs # inline asm
+rm src/test/incremental/issue-72386.rs # same
+rm src/test/incremental/change_crate_dep_kind.rs # requires -Cpanic=unwind
+rm src/test/incremental/incremental_proc_macro.rs # depends on proc-macros
+rm src/test/incremental/issue-49482.rs # same
+rm src/test/incremental/issue-54059.rs # same
+rm src/test/incremental/hashes/statics.rs # unsupported linkages
+rm src/test/incremental/hashes/function_interfaces.rs # same
+rm src/test/incremental/lto.rs # requires lto
+
+rm src/test/pretty/asm.rs # inline asm
+rm src/test/pretty/raw-str-nonexpr.rs # same
+rm src/test/pretty/attr-derive.rs # depends on proc-macros
+
+rm -r src/test/run-pass-valgrind/unsized-locals
+
 RUSTC_ARGS="-Zpanic-abort-tests -Zcodegen-backend="$(pwd)"/../target/"$CHANNEL"/librustc_codegen_cranelift."$dylib_ext" --sysroot "$(pwd)"/../build_sysroot/sysroot -Cpanic=abort"
 
 echo "[TEST] rustc test suite"
-./x.py test --stage 0 src/test/ui/ --rustc-args "$RUSTC_ARGS" 2>&1 | tee log.txt
+./x.py test --stage 0 src/test/{codegen-units,incremental,pretty,run-make,run-pass-valgrind,ui} --rustc-args "$RUSTC_ARGS" 2>&1 | tee log.txt
