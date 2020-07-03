@@ -94,7 +94,7 @@ EOF
 cargo install ripgrep
 
 git checkout $(rustc -V | cut -d' ' -f3 | tr -d '(') src/test
-rm -r src/test/ui/{abi*,derives/,extern/,panic-runtime/,panics/,unsized-locals/,proc-macro/,thinlto/,simd*,borrowck/,test*,*lto*.rs,linkage*,unwind-*.rs,*macro*.rs,duplicate/,symbol-names/} || true
+rm -r src/test/ui/{abi*,extern/,panics/,unsized-locals/,proc-macro/,thinlto/,simd*,*lto*.rs,linkage*,unwind-*.rs,duplicate/} || true
 for test in $(rg --files-with-matches "asm!|catch_unwind|should_panic|lto" src/test/ui); do
   rm $test
 done
@@ -108,10 +108,6 @@ git checkout -- src/test/ui/issues/auxiliary/issue-3136-a.rs # contains //~ERROR
 # these all depend on unwinding support
 rm src/test/ui/backtrace.rs
 rm src/test/ui/intrinsics/intrinsic-move-val-cleanups.rs
-rm src/test/ui/rust-2018/suggestions-not-always-applicable.rs
-rm -r src/test/ui/rfc-2565-param-attrs/*
-rm src/test/ui/underscore-imports/duplicate.rs
-rm src/test/ui/async-await/issues/issue-60674.rs
 rm src/test/ui/array-slice-vec/box-of-array-of-drop-*.rs
 rm src/test/ui/array-slice-vec/slice-panic-*.rs
 rm src/test/ui/array-slice-vec/nested-vec-3.rs
@@ -128,6 +124,25 @@ rm src/test/ui/numbers-arithmetic/int-abs-overflow.rs
 rm src/test/ui/drop/drop-trait-enum.rs
 rm src/test/ui/issues/issue-8460.rs
 
+# these all depend on proc-macro support
+rm src/test/ui/rust-2018/proc-macro-crate-in-paths.rs
+rm src/test/ui/proc_macro.rs
+rm src/test/ui/derives/derive-marker-tricky.rs
+rm src/test/ui/macro-quote-cond.rs
+rm src/test/ui/macro-quote-test.rs
+rm src/test/ui/rfc-2565-param-attrs/issue-64682-dropping-first-attrs-in-impl-fns.rs
+rm src/test/ui/rfc-2565-param-attrs/param-attrs-pretty.rs
+rm src/test/ui/rust-2018/suggestions-not-always-applicable.rs
+rm src/test/ui/underscore-imports/duplicate.rs
+rm src/test/ui/async-await/issues/issue-60674.rs
+
+# these all use non-scalar type as extern "C" function parameter => warning/crash
+rm src/test/ui/mir/mir_codegen_calls.rs
+rm src/test/ui/issues/issue-38763.rs
+rm src/test/ui/foreign/foreign-truncated-arguments.rs
+rm src/test/ui/align-with-extern-c-fn.rs
+rm src/test/ui/issues/issue-28676.rs
+
 rm src/test/ui/issues/issue-28950.rs # depends on stack size optimizations
 rm src/test/ui/init-large-type.rs # same
 rm src/test/ui/sse2.rs # cpuid not supported, so sse2 not detected
@@ -135,7 +150,6 @@ rm src/test/ui/issues/issue-33992.rs # unsupported linkages
 rm src/test/ui/issues/issue-51947.rs # same
 rm src/test/ui/impl-trait/impl-generic-mismatch.rs # same
 rm src/test/ui/issues/issue-21160.rs # same
-rm src/test/ui/issues/issue-28676.rs # depends on C abi passing structs at fixed stack offset
 rm src/test/ui/numbers-arithmetic/saturating-float-casts.rs # intrinsic gives different but valid result
 rm src/test/ui/mir/mir_misc_casts.rs # depends on deduplication of constants
 rm src/test/ui/mir/mir_raw_fat_ptr.rs # same
@@ -144,12 +158,8 @@ rm src/test/ui/async-await/async-fn-size-moved-locals.rs # -Cpanic=abort shrinks
 rm src/test/ui/async-await/async-fn-size-uninit-locals.rs # same
 rm src/test/ui/generator/size-moved-locals.rs # same
 rm src/test/ui/fn/dyn-fn-alignment.rs # wants a 256 byte alignment
-rm src/test/ui/rust-2018/proc-macro-crate-in-paths.rs # depends on proc-macro
-rm src/test/ui/mir/mir_codegen_calls.rs # uses non-scalar type as extern "C" function parameter => warning
-rm src/test/ui/issues/issue-38763.rs # same
-rm src/test/ui/foreign/foreign-truncated-arguments.rs # same
-rm src/test/ui/align-with-extern-c-fn.rs # same
 rm src/test/ui/consts/const_in_pattern/issue-73431.rs # gives warning for RUSTC_LOG=warn
+rm src/test/ui/test-attrs/test-fn-signature-verification-for-explicit-return-type.rs # "Cannot run dynamic test fn out-of-process"
 
 RUSTC_ARGS="-Zpanic-abort-tests -Zcodegen-backend="$(pwd)"/../target/"$CHANNEL"/librustc_codegen_cranelift."$dylib_ext" --sysroot "$(pwd)"/../build_sysroot/sysroot -Cpanic=abort"
 
