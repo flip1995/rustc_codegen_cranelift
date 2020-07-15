@@ -25,12 +25,12 @@ cfg-if = "0.1.10"
 libloading = { version = "0.6.0", optional = true }
 
 # Uncomment to use local checkout of cranelift
-#[patch."https://github.com/bytecodealliance/wasmtime/"]
-#cranelift-codegen = { path = "../wasmtime/cranelift/codegen" }
-#cranelift-frontend = { path = "../wasmtime/cranelift/frontend" }
-#cranelift-module = { path = "../wasmtime/cranelift/module" }
-#cranelift-simplejit = { path = "../wasmtime/cranelift/simplejit" }
-#cranelift-object = { path = "../wasmtime/cranelift/object" }
+[patch."https://github.com/bytecodealliance/wasmtime/"]
+cranelift-codegen = { path = "../wasmtime2/cranelift/codegen" }
+cranelift-frontend = { path = "../wasmtime2/cranelift/frontend" }
+cranelift-module = { path = "../wasmtime2/cranelift/module" }
+cranelift-simplejit = { path = "../wasmtime2/cranelift/simplejit" }
+cranelift-object = { path = "../wasmtime2/cranelift/object" }
 
 #[patch.crates-io]
 #gimli = { path = "../" }

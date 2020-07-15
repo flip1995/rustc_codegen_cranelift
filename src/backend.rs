@@ -47,6 +47,7 @@ pub(crate) trait WriteDebugInfo {
         section_map: &FxHashMap<SectionId, Self::SectionId>,
         from: &Self::SectionId,
         reloc: &DebugReloc,
+        pcrel: bool,
     );
 }
 
@@ -76,6 +77,7 @@ impl WriteDebugInfo for ObjectProduct {
         section_map: &FxHashMap<SectionId, Self::SectionId>,
         from: &Self::SectionId,
         reloc: &DebugReloc,
+        pcrel: bool,
     ) {
         let (symbol, symbol_offset) = match reloc.name {
             DebugRelocName::Section(id) => {
@@ -83,13 +85,21 @@ impl WriteDebugInfo for ObjectProduct {
             }
             DebugRelocName::Symbol(id) => {
                 let symbol_id = self.function_symbol(FuncId::from_u32(id.try_into().unwrap()));
-                self.object.symbol_section_and_offset(symbol_id).expect("Debug reloc for undef sym???")
+                if !pcrel {
+                    self.object.symbol_section_and_offset(symbol_id).expect("Debug reloc for undef sym???")
+                } else {
+                    (symbol_id, 0)
+                }
             }
         };
         self.object.add_relocation(from.0, Relocation {
             offset: u64::from(reloc.offset),
             symbol,
-            kind: RelocationKind::Absolute,
+            kind: if pcrel {
+                RelocationKind::Relative
+            } else {
+                RelocationKind::Absolute
+            },
             encoding: RelocationEncoding::Generic,
             size: reloc.size * 8,
             addend: i64::try_from(symbol_offset).unwrap() + reloc.addend,

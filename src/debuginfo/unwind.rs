@@ -20,7 +20,8 @@ impl<'tcx> UnwindContext<'tcx> {
         let mut frame_table = FrameTable::default();
 
 
-        let cie_id = if let Some(cie) = isa.create_systemv_cie() {
+        let cie_id = if let Some(cie) = isa.create_systemv_cie(4) {
+            println!("{:?}", cie);
             Some(frame_table.add_cie(cie))
         } else {
             None
@@ -64,7 +65,7 @@ impl<'tcx> UnwindContext<'tcx> {
             section_map.insert(id, section_id);
 
             for reloc in &eh_frame.0.relocs {
-                product.add_debug_reloc(&section_map, &section_id, reloc);
+                product.add_debug_reloc(&section_map, &section_id, reloc, true);
             }
         }
     }

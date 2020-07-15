@@ -15,7 +15,7 @@ TARGET_TRIPLE=$HOST_TRIPLE
 #TARGET_TRIPLE="x86_64-pc-windows-gnu"
 #TARGET_TRIPLE="aarch64-unknown-linux-gnu"
 
-linker=''
+linker='-C link-arg=-fuse-ld=lld'
 RUN_WRAPPER=''
 if [[ "$HOST_TRIPLE" != "$TARGET_TRIPLE" ]]; then
    if [[ "$TARGET_TRIPLE" == "aarch64-unknown-linux-gnu" ]]; then
