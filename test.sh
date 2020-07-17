@@ -94,7 +94,7 @@ EOF
 cargo install ripgrep
 
 git checkout $(rustc -V | cut -d' ' -f3 | tr -d '(') src/test
-rm -r src/test/ui/{abi*,extern/,panics/,unsized-locals/,proc-macro/,thinlto/,simd*,*lto*.rs,linkage*,unwind-*.rs,duplicate/} || true
+rm -r src/test/ui/{abi/,extern/,panics/,unsized-locals/,thinlto/,simd*,*lto*.rs,linkage*,unwind-*.rs,duplicate/} || true
 for test in $(rg --files-with-matches "asm!|catch_unwind|should_panic|lto" src/test/ui); do
   rm $test
 done
@@ -124,24 +124,11 @@ rm src/test/ui/numbers-arithmetic/int-abs-overflow.rs
 rm src/test/ui/drop/drop-trait-enum.rs
 rm src/test/ui/issues/issue-8460.rs
 
-# these all depend on proc-macro support
+# these all use ByScalarPair type as extern "C" function parameter => warning
 rm src/test/ui/rust-2018/proc-macro-crate-in-paths.rs
-rm src/test/ui/proc_macro.rs
-rm src/test/ui/derives/derive-marker-tricky.rs
-rm src/test/ui/macro-quote-cond.rs
-rm src/test/ui/macro-quote-test.rs
-rm src/test/ui/rfc-2565-param-attrs/issue-64682-dropping-first-attrs-in-impl-fns.rs
-rm src/test/ui/rfc-2565-param-attrs/param-attrs-pretty.rs
-rm src/test/ui/rust-2018/suggestions-not-always-applicable.rs
-rm src/test/ui/underscore-imports/duplicate.rs
-rm src/test/ui/async-await/issues/issue-60674.rs
-
-# these all use non-scalar type as extern "C" function parameter => warning/crash
+rm src/test/ui/proc-macro/crt-static.rs
+rm src/test/ui/proc-macro/no-missing-docs.rs
 rm src/test/ui/mir/mir_codegen_calls.rs
-rm src/test/ui/issues/issue-38763.rs
-rm src/test/ui/foreign/foreign-truncated-arguments.rs
-rm src/test/ui/align-with-extern-c-fn.rs
-rm src/test/ui/issues/issue-28676.rs
 
 rm src/test/ui/issues/issue-28950.rs # depends on stack size optimizations
 rm src/test/ui/init-large-type.rs # same
@@ -164,7 +151,6 @@ rm src/test/ui/test-attrs/test-fn-signature-verification-for-explicit-return-typ
 rm src/test/incremental/hashes/inline_asm.rs # inline asm
 rm src/test/incremental/issue-72386.rs # same
 rm src/test/incremental/change_crate_dep_kind.rs # requires -Cpanic=unwind
-rm src/test/incremental/incremental_proc_macro.rs # depends on proc-macros
 rm src/test/incremental/issue-49482.rs # same
 rm src/test/incremental/issue-54059.rs # same
 rm src/test/incremental/hashes/statics.rs # unsupported linkages
@@ -173,7 +159,6 @@ rm src/test/incremental/lto.rs # requires lto
 
 rm src/test/pretty/asm.rs # inline asm
 rm src/test/pretty/raw-str-nonexpr.rs # same
-rm src/test/pretty/attr-derive.rs # depends on proc-macros
 
 rm -r src/test/run-pass-valgrind/unsized-locals
 
