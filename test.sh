@@ -147,6 +147,7 @@ rm src/test/ui/generator/size-moved-locals.rs # same
 rm src/test/ui/fn/dyn-fn-alignment.rs # wants a 256 byte alignment
 rm src/test/ui/consts/const_in_pattern/issue-73431.rs # gives warning for RUSTC_LOG=warn
 rm src/test/ui/test-attrs/test-fn-signature-verification-for-explicit-return-type.rs # "Cannot run dynamic test fn out-of-process"
+rm src/test/ui/intrinsics/intrinsic-nearby.rs # unimplemented nearbyintf32 and nearbyintf64 intrinsics
 
 rm src/test/incremental/hashes/inline_asm.rs # inline asm
 rm src/test/incremental/issue-72386.rs # same
