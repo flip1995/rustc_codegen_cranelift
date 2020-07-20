@@ -1,6 +1,6 @@
 #[cfg(debug_assertions)]
 mod comments;
-mod pass_mode;
+pub mod pass_mode;
 mod returning;
 
 use rustc_target::spec::abi::Abi;
@@ -111,7 +111,7 @@ fn clif_sig_from_fn_sig<'tcx>(
     let inputs = inputs
         .into_iter()
         .enumerate()
-        .map(|(i, ty)| {
+        .flat_map(|(i, ty)| {
             let mut layout = tcx.layout_of(ParamEnv::reveal_all().and(ty)).unwrap();
             if i == 0 && is_vtable_fn {
                 // Virtual calls turn their self param into a thin pointer.
@@ -143,8 +143,7 @@ fn clif_sig_from_fn_sig<'tcx>(
                 }
             }
             pass_mode.get_param_ty(tcx).map(AbiParam::new).into_iter()
-        })
-        .flatten();
+        });
 
     let (mut params, returns): (Vec<_>, Vec<_>) = match get_pass_mode(
         tcx,

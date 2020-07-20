@@ -57,6 +57,11 @@ pub(crate) fn trans_fn<'tcx, B: Backend + 'static>(
         inline_asm_index: 0,
     };
 
+    use rustc_target::abi::call::FnAbi;
+    use rustc_middle::ty::layout::FnAbiExt;
+
+    crate::abi::pass_mode::clif_sig_from_fn_abi(tcx, fx.module.isa().triple(), FnAbi::of_instance(&fx, instance, &[]), tcx.def_span(instance.def_id()));
+
     let arg_uninhabited = fx.mir.args_iter().any(|arg| fx.layout_of(fx.monomorphize(&fx.mir.local_decls[arg].ty)).abi.is_uninhabited());
 
     if arg_uninhabited {

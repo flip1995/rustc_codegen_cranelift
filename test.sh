@@ -74,7 +74,7 @@ $RUSTC example/mod_bench.rs --crate-type bin --target $TARGET_TRIPLE
 git clone https://github.com/rust-lang/rust.git --single-branch || true
 cd rust
 git fetch
-git checkout -f $(rustc -V | cut -d' ' -f3 | tr -d '(')
+#git checkout -f $(rustc -V | cut -d' ' -f3 | tr -d '(')
 export RUSTFLAGS=
 export CG_CLIF_DISPLAY_CG_TIME=
 
@@ -94,7 +94,7 @@ EOF
 cargo install ripgrep
 
 git checkout $(rustc -V | cut -d' ' -f3 | tr -d '(') src/test
-rm -r src/test/ui/{abi/,extern/,panics/,unsized-locals/,thinlto/,simd*,*lto*.rs,linkage*,unwind-*.rs,duplicate/} || true
+rm -r src/test/ui/{extern/,panics/,unsized-locals/,thinlto/,simd*,*lto*.rs,linkage*,unwind-*.rs,duplicate/} || true
 for test in $(rg --files-with-matches "asm!|catch_unwind|should_panic|lto" src/test/ui); do
   rm $test
 done
@@ -148,6 +148,7 @@ rm src/test/ui/fn/dyn-fn-alignment.rs # wants a 256 byte alignment
 rm src/test/ui/consts/const_in_pattern/issue-73431.rs # gives warning for RUSTC_LOG=warn
 rm src/test/ui/test-attrs/test-fn-signature-verification-for-explicit-return-type.rs # "Cannot run dynamic test fn out-of-process"
 rm src/test/ui/intrinsics/intrinsic-nearby.rs # unimplemented nearbyintf32 and nearbyintf64 intrinsics
+rm src/test/ui/abi/variadic-ffi.rs # requires variadic function definitions
 
 rm src/test/incremental/hashes/inline_asm.rs # inline asm
 rm src/test/incremental/issue-72386.rs # same

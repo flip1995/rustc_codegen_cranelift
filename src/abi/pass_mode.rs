@@ -172,3 +172,50 @@ pub(super) fn cvalue_for_param<'tcx>(
         }
     }
 }
+
+use rustc_target::abi::call::{ArgAbi, ArgAttribute, ArgAttributes, Conv, FnAbi};
+
+pub/*(super)*/ fn clif_sig_from_fn_abi<'tcx>(
+    tcx: TyCtxt<'tcx>,
+    triple: &target_lexicon::Triple,
+    fn_abi: FnAbi<'tcx, Ty<'tcx>>,
+    span: Span,
+) -> Signature {
+    use rustc_target::abi::call::PassMode;
+    let call_conv = match fn_abi.conv {
+        //Conv::Rust => unreachable!(),
+        Conv::Rust | Conv::C => CallConv::triple_default(triple),
+
+        Conv::X86_64SysV => CallConv::SystemV,
+        Conv::X86_64Win64 => CallConv::WindowsFastcall,
+
+        _ => tcx.sess.span_fatal(span, &format!("call conv {:?} not yet implemented", fn_abi.conv)),
+    };
+
+    let params = fn_abi.args.into_iter().flat_map(|arg| {
+        println!("{:?}", arg);
+        match arg.mode {
+            PassMode::Ignore => EmptySinglePair::Empty.into_iter(),
+            PassMode::Direct(attrs) => EmptySinglePair::Single(abi_param_for_attrs(attrs)).into_iter(),
+            PassMode::Pair(a, b) => EmptySinglePair::Pair(
+                abi_param_for_attrs(a),
+                abi_param_for_attrs(b),
+            ).into_iter(),
+            PassMode::Cast(cast_target) => todo!(),
+            PassMode::Indirect(ptr, extra) => todo!(),
+        }
+    }).collect();
+    let returns = vec![];
+
+    Signature {
+        params,
+        returns,
+        call_conv,
+    }
+}
+
+fn abi_param_for_attrs(attrs: ArgAttributes) -> AbiParam {
+    println!("{:?}", attrs);
+    assert!(attrs.regular.contains(ArgAttribute::ByVal));
+    todo!()
+}
