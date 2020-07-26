@@ -20,4 +20,4 @@ fi
 cmd=$1
 shift
 
-cargo +${TOOLCHAIN} $cmd $@
+RUSTFLAGS="$RUSTFLAGS --emit link,metadata,llvm-ir" cargo +${TOOLCHAIN} $cmd $@

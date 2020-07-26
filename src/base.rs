@@ -281,14 +281,22 @@ fn codegen_fn_content(fx: &mut FunctionCx<'_, '_, impl Backend>) {
                 values,
                 targets,
             } => {
-                let discr = trans_operand(fx, discr).load_scalar(fx);
-                let mut switch = ::cranelift_frontend::Switch::new();
-                for (i, value) in values.iter().enumerate() {
-                    let block = fx.get_block(targets[i]);
-                    switch.set_entry(*value, block);
+                if values.as_ref() == &[0] {
+                    let discr = trans_operand(fx, discr).load_bool(fx);
+                    let false_case = fx.get_block(targets[0]);
+                    fx.bcx.ins().brz(discr, false_case, &[]);
+                    let true_case = fx.get_block(targets[1]);
+                    fx.bcx.ins().jump(true_case, &[]);
+                } else {
+                    let discr = trans_operand(fx, discr).load_scalar(fx);
+                    let mut switch = ::cranelift_frontend::Switch::new();
+                    for (i, value) in values.iter().enumerate() {
+                        let block = fx.get_block(targets[i]);
+                        switch.set_entry(*value, block);
+                    }
+                    let otherwise_block = fx.get_block(targets[targets.len() - 1]);
+                    switch.emit(&mut fx.bcx, discr, otherwise_block);
                 }
-                let otherwise_block = fx.get_block(targets[targets.len() - 1]);
-                switch.emit(&mut fx.bcx, discr, otherwise_block);
             }
             TerminatorKind::Call {
                 func,
@@ -373,7 +381,7 @@ fn trans_stmt<'tcx>(
 
     fx.set_debug_loc(stmt.source_info);
 
-    #[cfg(false_debug_assertions)]
+    #[cfg(debug_assertions)]
     match &stmt.kind {
         StatementKind::StorageLive(..) | StatementKind::StorageDead(..) => {} // Those are not very useful
         _ => {
@@ -431,15 +439,17 @@ fn trans_stmt<'tcx>(
                 Rvalue::UnaryOp(un_op, operand) => {
                     let operand = trans_operand(fx, operand);
                     let layout = operand.layout();
-                    let val = operand.load_scalar(fx);
                     let res = match un_op {
                         UnOp::Not => {
                             match layout.ty.kind {
                                 ty::Bool => {
+                                    let val = operand.load_scalar(fx);
+                                    // FIXME bnot not working
                                     let res = fx.bcx.ins().icmp_imm(IntCC::Equal, val, 0);
                                     CValue::by_val(fx.bcx.ins().bint(types::I8, res), layout)
                                 }
                                 ty::Uint(_) | ty::Int(_) => {
+                                    let val = operand.load_scalar(fx);
                                     CValue::by_val(fx.bcx.ins().bnot(val), layout)
                                 }
                                 _ => unreachable!("un op Not for {:?}", layout.ty),
@@ -452,9 +462,11 @@ fn trans_stmt<'tcx>(
                                 crate::num::trans_int_binop(fx, BinOp::Sub, zero, operand)
                             }
                             ty::Int(_) => {
+                                let val = operand.load_scalar(fx);
                                 CValue::by_val(fx.bcx.ins().ineg(val), layout)
                             }
                             ty::Float(_) => {
+                                let val = operand.load_scalar(fx);
                                 CValue::by_val(fx.bcx.ins().fneg(val), layout)
                             }
                             _ => unreachable!("un op Neg for {:?}", layout.ty),

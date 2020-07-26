@@ -23,7 +23,7 @@ $RUSTC example/example.rs --crate-type lib --target $TARGET_TRIPLE
 
 if [[ "$HOST_TRIPLE" = "$TARGET_TRIPLE" ]]; then
     echo "[JIT] mini_core_hello_world"
-    CG_CLIF_JIT=1 CG_CLIF_JIT_ARGS="abc bcd" $RUSTC --crate-type bin -Cprefer-dynamic example/mini_core_hello_world.rs --cfg jit --target $HOST_TRIPLE
+    #CG_CLIF_JIT=1 CG_CLIF_JIT_ARGS="abc bcd" $RUSTC --crate-type bin -Cprefer-dynamic example/mini_core_hello_world.rs --cfg jit --target $HOST_TRIPLE
 else
     echo "[JIT] mini_core_hello_world (skipped)"
 fi
@@ -74,13 +74,12 @@ $RUSTC example/mod_bench.rs --crate-type bin --target $TARGET_TRIPLE
 pushd simple-raytracer
 if [[ "$HOST_TRIPLE" = "$TARGET_TRIPLE" ]]; then
     echo "[BENCH COMPILE] ebobby/simple-raytracer"
-    hyperfine --runs ${RUN_RUNS:-10} --warmup 1 --prepare "cargo clean" \
-    "RUSTFLAGS='' cargo build" \
-    "../cargo.sh build"
+    cargo clean; ../cargo.sh build
 
     echo "[BENCH RUN] ebobby/simple-raytracer"
-    cp ./target/debug/main ./raytracer_cg_clif
-    hyperfine --runs ${RUN_RUNS:-10} ./raytracer_cg_llvm ./raytracer_cg_clif
+    cp ./target/debug/main ./raytracer_cg_clif_bool_opt
+    exit
+    hyperfine --runs ${RUN_RUNS:-2} ./raytracer_cg_clif*
 else
     echo "[BENCH COMPILE] ebobby/simple-raytracer (skipped)"
     echo "[COMPILE] ebobby/simple-raytracer"

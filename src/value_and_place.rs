@@ -128,8 +128,25 @@ impl<'tcx> CValue<'tcx> {
                 };
                 ptr.load(fx, clif_ty, MemFlags::new())
             }
-            CValueInner::ByVal(value) => value,
+            CValueInner::ByVal(value) => if fx.bcx.func.dfg.value_type(value) == types::B1 {
+                fx.bcx.ins().bint(types::I8, value)
+            } else {
+                value
+            },
             CValueInner::ByRef(_, Some(_)) => bug!("load_scalar for unsized value not allowed"),
+            CValueInner::ByValPair(_, _) => bug!("Please use load_scalar_pair for ByValPair"),
+        }
+    }
+
+    /// Load a value with layout.abi of scalar
+    pub(crate) fn load_bool(self, fx: &mut FunctionCx<'_, 'tcx, impl Backend>) -> Value {
+        match self.0 {
+            CValueInner::ByRef(ptr, None) => {
+                let val = ptr.load(fx, types::I8, MemFlags::new());
+                fx.bcx.ins().icmp_imm(IntCC::NotEqual, val, 0)
+            }
+            CValueInner::ByVal(val) => val,
+            CValueInner::ByRef(_, Some(_)) => bug!("load_bool for unsized value not allowed"),
             CValueInner::ByValPair(_, _) => bug!("Please use load_scalar_pair for ByValPair"),
         }
     }
@@ -155,7 +172,15 @@ impl<'tcx> CValue<'tcx> {
             }
             CValueInner::ByRef(_, Some(_)) => bug!("load_scalar_pair for unsized value not allowed"),
             CValueInner::ByVal(_) => bug!("Please use load_scalar for ByVal"),
-            CValueInner::ByValPair(val1, val2) => (val1, val2),
+            CValueInner::ByValPair(val1, val2) => (if fx.bcx.func.dfg.value_type(val1) == types::B1 {
+                fx.bcx.ins().bint(types::I8, val1)
+            } else {
+                val1
+            }, if fx.bcx.func.dfg.value_type(val2) == types::B1 {
+                fx.bcx.ins().bint(types::I8, val2)
+            } else {
+                val2
+            }),
         }
     }
 
@@ -215,14 +240,14 @@ impl<'tcx> CValue<'tcx> {
 
         let clif_ty = fx.clif_type(layout.ty).unwrap();
 
-        match layout.ty.kind {
-            ty::Bool => {
-                assert!(const_val == 0 || const_val == 1, "Invalid bool 0x{:032X}", const_val);
-            }
-            _ => {}
-        }
-
         let val = match layout.ty.kind {
+            ty::Bool => {
+                match const_val {
+                    0 => fx.bcx.ins().bconst(types::B1, false),
+                    1 => fx.bcx.ins().bconst(types::B1, true),
+                    _ => panic!("Invalid bool 0x{:032X}", const_val),
+                }
+            }
             ty::Uint(UintTy::U128) | ty::Int(IntTy::I128) => {
                 let lsb = fx.bcx.ins().iconst(types::I64, const_val as u64 as i64);
                 let msb = fx
@@ -231,7 +256,7 @@ impl<'tcx> CValue<'tcx> {
                     .iconst(types::I64, (const_val >> 64) as u64 as i64);
                 fx.bcx.ins().iconcat(lsb, msb)
             }
-            ty::Bool | ty::Char | ty::Uint(_) | ty::Int(_) | ty::Ref(..)
+            ty::Char | ty::Uint(_) | ty::Int(_) | ty::Ref(..)
             | ty::RawPtr(..) => {
                 fx
                     .bcx
@@ -488,8 +513,12 @@ impl<'tcx> CPlace<'tcx> {
             dst_ty: Type,
         ) {
             let src_ty = fx.bcx.func.dfg.value_type(data);
+            //println!("{:?}: {} <- {}: {}", var, dst_ty, data, src_ty);
             let data = match (src_ty, dst_ty) {
                 (_, _) if src_ty == dst_ty => data,
+
+                (types::I8, types::B1) => fx.bcx.ins().icmp_imm(IntCC::NotEqual, data, 0),
+                (types::B1, types::I8) => fx.bcx.ins().bint(types::I8, data),
 
                 // This is a `write_cvalue_transmute`.
                 (types::I32, types::F32) | (types::F32, types::I32)
@@ -523,7 +552,12 @@ impl<'tcx> CPlace<'tcx> {
         let dst_layout = self.layout();
         let to_ptr = match self.inner {
             CPlaceInner::Var(_local, var) => {
-                let data = CValue(from.0, dst_layout).load_scalar(fx);
+                let from = CValue(from.0, dst_layout);
+                let data = if fx.clif_type(from.layout().ty).unwrap() == types::B1 {
+                    from.load_bool(fx)
+                } else {
+                    from.load_scalar(fx)
+                };
                 let dst_ty = fx.clif_type(self.layout().ty).unwrap();
                 transmute_value(fx, var, data, dst_ty);
                 return;

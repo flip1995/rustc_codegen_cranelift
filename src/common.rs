@@ -32,7 +32,7 @@ pub(crate) fn scalar_to_clif_type(tcx: TyCtxt<'_>, scalar: Scalar) -> Type {
 
 fn clif_type_from_ty<'tcx>(tcx: TyCtxt<'tcx>, ty: Ty<'tcx>) -> Option<types::Type> {
     Some(match ty.kind {
-        ty::Bool => types::I8,
+        ty::Bool => types::B1,
         ty::Uint(size) => match size {
             UintTy::U8 => types::I8,
             UintTy::U16 => types::I16,
