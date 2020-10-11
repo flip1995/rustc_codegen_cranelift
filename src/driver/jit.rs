@@ -221,12 +221,13 @@ pub extern "C" fn __clif_jit_fn(instance_ptr: *const Instance<'static>) -> *cons
             .declare_function(&name, Linkage::Export, &sig)
             .unwrap();
 
-        let (mut jit_module, global_asm, _debug_context, _unwind_context, statics) = cx.finalize();
+        let (mut jit_module, global_asm, _debug_context, unwind_context, statics) = cx.finalize();
         assert!(global_asm.is_empty());
         assert!(statics.is_empty());
         jit_module.finalize_definitions();
         let ptr = jit_module.get_finalized_function(func_id);
-        jit_module.finish();
+        let jit_product = jit_module.finish();
+        std::mem::forget(unsafe { unwind_context.register_jit(&jit_product) });
 
         INSTANCE_CODEGEN.with(|instance_codegen| {
             instance_codegen
