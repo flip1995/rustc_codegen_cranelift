@@ -90,9 +90,9 @@ pub(super) fn run_jit(tcx: TyCtxt<'_>) -> ! {
         .into_iter()
         .collect::<Vec<(_, (_, _))>>();
 
-    let mut cx = crate::CodegenCx::new(tcx, jit_module, false);
+    let mut cx = crate::CodegenCx::new(tcx, jit_module, false, true);
 
-    let (mut jit_module, global_asm, _debug, mut unwind_context) =
+    let (mut jit_module, global_asm, _debug, mut unwind_context, statics) =
         super::time(tcx, "codegen mono items", || {
             super::predefine_mono_items(&mut cx, &mono_items);
             for &(mono_item, _) in &mono_items {
@@ -145,6 +145,19 @@ pub(super) fn run_jit(tcx: TyCtxt<'_>) -> ! {
     if !global_asm.is_empty() {
         tcx.sess.fatal("Inline asm is not supported in JIT mode");
     }
+
+    jit_module.finalize_definitions();
+    for (def_id, data_id) in statics {
+        EXISTING_SYMBOLS.with(|existing_symbols| {
+            existing_symbols.borrow_mut().insert(
+                tcx.symbol_name(Instance::mono(tcx, def_id))
+                    .name
+                    .to_string(),
+                jit_module.get_finalized_data(data_id).0,
+            );
+        });
+    }
+
     crate::main_shim::maybe_create_entry_wrapper(tcx, &mut jit_module, &mut unwind_context, true);
     crate::allocator::codegen(tcx, &mut jit_module, &mut unwind_context);
 
@@ -195,7 +208,7 @@ pub extern "C" fn __clif_jit_fn(instance_ptr: *const Instance<'static>) -> *cons
         let instance = tcx.lift(unsafe { &*instance_ptr }).unwrap();
 
         let jit_module = make_jit(tcx);
-        let mut cx = crate::CodegenCx::new(tcx, jit_module, false);
+        let mut cx = crate::CodegenCx::new(tcx, jit_module, false, false);
 
         tcx.sess.time("codegen fn", || {
             crate::base::trans_fn(&mut cx, instance, Linkage::Export)
@@ -208,8 +221,9 @@ pub extern "C" fn __clif_jit_fn(instance_ptr: *const Instance<'static>) -> *cons
             .declare_function(&name, Linkage::Export, &sig)
             .unwrap();
 
-        let (mut jit_module, global_asm, _debug_context, _unwind_context) = cx.finalize();
+        let (mut jit_module, global_asm, _debug_context, _unwind_context, statics) = cx.finalize();
         assert!(global_asm.is_empty());
+        assert!(statics.is_empty());
         jit_module.finalize_definitions();
         let ptr = jit_module.get_finalized_function(func_id);
         jit_module.finish();

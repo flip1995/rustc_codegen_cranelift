@@ -140,18 +140,20 @@ struct CodegenCx<'tcx, M: Module> {
 }
 
 impl<'tcx, M: Module> CodegenCx<'tcx, M> {
-    fn new(tcx: TyCtxt<'tcx>, module: M, debug_info: bool) -> Self {
+    fn new(tcx: TyCtxt<'tcx>, module: M, debug_info: bool, make_shim: bool) -> Self {
         let unwind_context = UnwindContext::new(tcx, module.isa());
         let debug_context = if debug_info {
             Some(DebugContext::new(tcx, module.isa()))
         } else {
             None
         };
+        let mut constants_cx = ConstantCx::default();
+        constants_cx.make_shim = make_shim;
         CodegenCx {
             tcx,
             module,
             global_asm: String::new(),
-            constants_cx: ConstantCx::default(),
+            constants_cx,
             cached_context: Context::new(),
             vtables: FxHashMap::default(),
             debug_context,
@@ -159,13 +161,22 @@ impl<'tcx, M: Module> CodegenCx<'tcx, M> {
         }
     }
 
-    fn finalize(mut self) -> (M, String, Option<DebugContext<'tcx>>, UnwindContext<'tcx>) {
-        self.constants_cx.finalize(self.tcx, &mut self.module);
+    fn finalize(
+        mut self,
+    ) -> (
+        M,
+        String,
+        Option<DebugContext<'tcx>>,
+        UnwindContext<'tcx>,
+        FxHashMap<DefId, DataId>,
+    ) {
+        let statics = self.constants_cx.finalize(self.tcx, &mut self.module);
         (
             self.module,
             self.global_asm,
             self.debug_context,
             self.unwind_context,
+            statics,
         )
     }
 }
