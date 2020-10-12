@@ -144,15 +144,6 @@ pub(super) fn run_jit(tcx: TyCtxt<'_>) -> ! {
                     .insert(decl.name.clone(), jit_module.get_finalized_data(data_id).0);
             }
         }
-
-        /*for (def_id, data_id) in statics {
-            existing_symbols.borrow_mut().insert(
-                tcx.symbol_name(Instance::mono(tcx, def_id))
-                    .name
-                    .to_string(),
-                jit_module.get_finalized_data(data_id).0,
-            );
-        }*/
     });
 
     crate::main_shim::maybe_create_entry_wrapper(tcx, &mut jit_module, &mut unwind_context, true);
@@ -191,7 +182,7 @@ pub(super) fn run_jit(tcx: TyCtxt<'_>) -> ! {
 pub extern "C" fn __clif_jit_fn(instance_ptr: *const Instance<'static>) -> *const u8 {
     if let Some(f) = INSTANCE_CODEGEN.with(|instance_codegen| {
         if let Some(&f) = instance_codegen.borrow().get(unsafe { &*instance_ptr }) {
-            println!("Existing @ {:p}", f);
+            //println!("Existing @ {:p}", f);
             Some(f)
         } else {
             None
@@ -235,7 +226,7 @@ pub extern "C" fn __clif_jit_fn(instance_ptr: *const Instance<'static>) -> *cons
             existing_symbols.borrow_mut().insert(name, ptr);
         });
 
-        println!("New {:?} @ {:p}", instance, ptr);
+        //println!("New {:?} @ {:p}", instance, ptr);
 
         ptr
     })
