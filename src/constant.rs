@@ -29,16 +29,11 @@ enum TodoItem {
 }
 
 impl ConstantCx {
-    pub(crate) fn finalize(
-        mut self,
-        tcx: TyCtxt<'_>,
-        module: &mut impl Module,
-    ) -> FxHashMap<DefId, DataId> {
+    pub(crate) fn finalize(mut self, tcx: TyCtxt<'_>, module: &mut impl Module) {
         //println!("todo {:?}", self.todo);
-        let statics = define_all_allocs(tcx, module, &mut self);
+        define_all_allocs(tcx, module, &mut self);
         //println!("done {:?}", self.done);
         self.done.clear();
-        statics
     }
 }
 
@@ -369,13 +364,7 @@ fn data_id_for_static(
     }
 }
 
-fn define_all_allocs(
-    tcx: TyCtxt<'_>,
-    module: &mut impl Module,
-    cx: &mut ConstantCx,
-) -> FxHashMap<DefId, DataId> {
-    let mut statics = FxHashMap::default();
-
+fn define_all_allocs(tcx: TyCtxt<'_>, module: &mut impl Module, cx: &mut ConstantCx) {
     while let Some(todo_item) = cx.todo.pop() {
         let (data_id, alloc, section_name) = match todo_item {
             TodoItem::Alloc(alloc_id) => {
@@ -398,7 +387,6 @@ fn define_all_allocs(
                 let alloc = tcx.eval_static_initializer(def_id).unwrap();
 
                 let data_id = data_id_for_static(tcx, module, def_id, true);
-                statics.insert(def_id, data_id);
                 (data_id, alloc, section_name)
             }
         };
@@ -473,8 +461,6 @@ fn define_all_allocs(
     }
 
     assert!(cx.todo.is_empty(), "{:?}", cx.todo);
-
-    statics
 }
 
 pub(crate) fn mir_operand_get_const_val<'tcx>(

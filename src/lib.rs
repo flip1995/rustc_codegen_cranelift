@@ -161,22 +161,13 @@ impl<'tcx, M: Module> CodegenCx<'tcx, M> {
         }
     }
 
-    fn finalize(
-        mut self,
-    ) -> (
-        M,
-        String,
-        Option<DebugContext<'tcx>>,
-        UnwindContext<'tcx>,
-        FxHashMap<DefId, DataId>,
-    ) {
-        let statics = self.constants_cx.finalize(self.tcx, &mut self.module);
+    fn finalize(mut self) -> (M, String, Option<DebugContext<'tcx>>, UnwindContext<'tcx>) {
+        self.constants_cx.finalize(self.tcx, &mut self.module);
         (
             self.module,
             self.global_asm,
             self.debug_context,
             self.unwind_context,
-            statics,
         )
     }
 }

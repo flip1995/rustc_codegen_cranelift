@@ -173,7 +173,7 @@ fn module_codegen(tcx: TyCtxt<'_>, cgu_name: rustc_span::Symbol) -> ModuleCodege
             }
         }
     }
-    let (mut module, global_asm, debug, mut unwind_context, _statics) =
+    let (mut module, global_asm, debug, mut unwind_context) =
         tcx.sess.time("finalize CodegenCx", || cx.finalize());
     crate::main_shim::maybe_create_entry_wrapper(tcx, &mut module, &mut unwind_context, false);
 
