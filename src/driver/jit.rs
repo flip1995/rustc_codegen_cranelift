@@ -26,6 +26,8 @@ fn make_jit(tcx: TyCtxt<'_>) -> SimpleJITModule {
             .collect()
     });
 
+    println!("{:?}", existing_symbols.iter().filter(|(name, _)| name == "puts").collect::<Vec<_>>());
+
     let mut jit_builder = SimpleJITBuilder::with_isa(
         crate::build_isa(tcx.sess, false),
         cranelift_module::default_libcall_names(),
@@ -226,7 +228,7 @@ pub extern "C" fn __clif_jit_fn(instance_ptr: *const Instance<'static>) -> *cons
             existing_symbols.borrow_mut().insert(name, ptr);
         });
 
-        //println!("New {:?} @ {:p}", instance, ptr);
+        println!("New {:?} @ {:p}", instance, ptr);
 
         ptr
     })

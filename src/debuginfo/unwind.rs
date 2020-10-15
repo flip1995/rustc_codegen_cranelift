@@ -81,6 +81,7 @@ impl<'tcx> UnwindContext<'tcx> {
         self,
         jit_product: &cranelift_simplejit::SimpleJITProduct,
     ) -> Option<UnwindRegistry> {
+        return None;
         let mut eh_frame = EhFrame::from(super::emit::WriterRelocate::new(super::target_endian(
             self.tcx,
         )));

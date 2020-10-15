@@ -34,6 +34,8 @@ else
     echo "[JIT] mini_core_hello_world (skipped)"
 fi
 
+exit
+
 echo "[AOT] mini_core_hello_world"
 $RUSTC example/mini_core_hello_world.rs --crate-name mini_core_hello_world --crate-type bin -g --target $TARGET_TRIPLE
 $RUN_WRAPPER ./target/out/mini_core_hello_world abc bcd
@@ -43,8 +45,8 @@ echo "[AOT] arbitrary_self_types_pointers_and_wrappers"
 $RUSTC example/arbitrary_self_types_pointers_and_wrappers.rs --crate-name arbitrary_self_types_pointers_and_wrappers --crate-type bin --target $TARGET_TRIPLE
 $RUN_WRAPPER ./target/out/arbitrary_self_types_pointers_and_wrappers
 
-echo "[BUILD] sysroot"
-time ./build_sysroot/build_sysroot.sh --release
+#echo "[BUILD] sysroot"
+#time ./build_sysroot/build_sysroot.sh --release
 
 echo "[AOT] alloc_example"
 $RUSTC example/alloc_example.rs --crate-type bin --target $TARGET_TRIPLE
@@ -65,6 +67,10 @@ $RUN_WRAPPER ./target/out/dst_field_align || (echo $?; false)
 echo "[AOT] std_example"
 $RUSTC example/std_example.rs --crate-type bin --target $TARGET_TRIPLE
 $RUN_WRAPPER ./target/out/std_example arg
+
+hyperfine -r20 "$RUSTC --jit example/std_example.rs --target $HOST_TRIPLE" "$RUSTC example/std_example.rs --crate-type bin --target $TARGET_TRIPLE && $RUN_WRAPPER ./target/out/std_example arg"
+
+exit
 
 echo "[AOT] subslice-patterns-const-eval"
 $RUSTC example/subslice-patterns-const-eval.rs --crate-type bin -Cpanic=abort --target $TARGET_TRIPLE
