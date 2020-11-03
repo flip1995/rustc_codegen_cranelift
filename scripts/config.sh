@@ -43,7 +43,7 @@ dir=$(cd $(dirname "$BASH_SOURCE"); pwd)
 
 export RUSTC=$dir"/bin/cg_clif"
 export RUSTFLAGS=$linker
-export RUSTDOCFLAGS=$linker' -Ztrim-diagnostic-paths=no -Cpanic=abort -Zpanic-abort-tests '\
+export RUSTDOCFLAGS=$linker' -Cpanic=abort -Zpanic-abort-tests '\
 '-Zcodegen-backend='$dir'/lib/librustc_codegen_cranelift.'$dylib_ext' --sysroot '$dir
 
 # FIXME remove once the atomic shim is gone
